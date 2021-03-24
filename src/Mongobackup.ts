@@ -13,6 +13,7 @@ export class Mongobackup {
     this.program = program
       .description('Manage your MongoDB backups during development.')
       .option('-l, --list', 'List your snapshots')
+      .option('-c, --create', 'Create a database full snapshot')
       .parse(args)
   }
 
@@ -31,25 +32,23 @@ export class Mongobackup {
     }
   }
 
-  public async selectCommand(options: OptionValues): Promise<void> {
+  public async execute(options: OptionValues): Promise<void> {
     if (options.list) {
       const table = (await this.list()) as Table
       console.log(`You have ${table.length} snapshots for the fundacion database:`)
       console.log(table.toString())
+    } else if (options.create) {
+      this.api.createSnapshot('fundacion')
     }
   }
 
   public initialize(): void {
-    const options: OptionValues = this.program.opts()
+    const options = this.program.opts()
     this.printHeader()
-    this.selectCommand(options)
+    this.execute(options)
   }
 
   public printHeader(): void {
     console.log(chalk.green(figlet.textSync('mongobackup')), '\n')
-  }
-
-  public outputHelp(): void {
-    this.program.outputHelp()
   }
 }
