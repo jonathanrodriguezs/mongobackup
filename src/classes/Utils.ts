@@ -1,13 +1,9 @@
 import fs from 'fs'
 import { ChildProcessWithoutNullStreams } from 'node:child_process'
 
+export type AlphanumericArray = Array<Array<string | number>>
+
 export class Utils {
-  BYTES_TO_MEGABYTES: number
-
-  constructor() {
-    this.BYTES_TO_MEGABYTES = 1024 * 1024
-  }
-
   promiseFromChildProcess(child: ChildProcessWithoutNullStreams) {
     return new Promise(function (resolve, reject) {
       child.addListener('error', reject)
@@ -15,10 +11,13 @@ export class Utils {
     })
   }
 
-  getFilesizeInBytes(filename: string) {
-    const stats = fs.statSync(filename)
-    const fileSizeInBytes = stats.size
-    return fileSizeInBytes
+  bytesToMegaBytes(bytes: number): string {
+    const BYTES_TO_MEGABYTES = 1024 * 1024
+    return (bytes / BYTES_TO_MEGABYTES).toFixed(2) + ' MB'
+  }
+
+  getFullDateString(date: Date): string {
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
   }
 
   async createDirectory(filepath: string): Promise<void> {

@@ -1,11 +1,12 @@
 import chalk from 'chalk'
 import figlet from 'figlet'
-import program, { CommanderStatic, OptionValues } from 'commander'
-import { BackupService } from './BackupService'
 import Table from 'cli-table'
+import program from 'commander'
+import { BackupService } from './BackupService'
+import { AlphanumericArray } from './Utils'
 
 export class Mongobackup {
-  private program: CommanderStatic
+  private program: program.CommanderStatic
   private api: BackupService
 
   constructor(private args: string[]) {
@@ -19,33 +20,30 @@ export class Mongobackup {
 
   public async list(): Promise<Table | void> {
     try {
-      const snapshots: Array<string[]> = await this.api.getListOfSnapshots()
+      const snapshots: AlphanumericArray = await this.api.getListOfSnapshots('fundacion')
       const table = new Table({
-        head: ['ID', 'Date', 'Size', 'Size', 'Size'],
+        head: ['ID', 'Date', 'Size'],
         chars: { mid: '', 'left-mid': '', 'mid-mid': '', 'right-mid': '' },
         style: { 'padding-left': 2, 'padding-right': 2, head: [], border: [] }
       })
       table.push(...snapshots)
+      console.log(`You have ${table.length} snapshots for the fundacion database:`)
+      console.log(table.toString())
       return table
     } catch (error) {
       console.log('Error', error)
     }
   }
 
-  public async execute(options: OptionValues): Promise<void> {
-    if (options.list) {
-      const table = (await this.list()) as Table
-      console.log(`You have ${table.length} snapshots for the fundacion database:`)
-      console.log(table.toString())
-    } else if (options.create) {
-      this.api.createSnapshot('fundacion')
-    }
+  public async execute(options: program.OptionValues): Promise<void> {
+    if (options.list) await this.list()
+    else if (options.create) await this.api.createSnapshot('fundacion')
   }
 
   public initialize(): void {
     const options = this.program.opts()
     this.printHeader()
-    this.execute(options)
+    this.execute({ list: true })
   }
 
   public printHeader(): void {
