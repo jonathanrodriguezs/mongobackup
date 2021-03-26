@@ -43,6 +43,7 @@ export class Mongobackup {
     if (options.list) await this.list(database)
     else if (options.create) await this.api.createSnapshot(database)
     else if (options.restore) await this.api.restoreSnapshot(database, snapshot)
+    else if (options.delete) await this.api.deleteSnapshot(database, snapshot)
   }
 
   public initialize(): void {

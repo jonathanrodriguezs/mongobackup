@@ -1,16 +1,10 @@
 import fs from 'fs'
+import path from 'path'
 import { execSync, ChildProcessWithoutNullStreams } from 'child_process'
 
 export type AlphanumericArray = Array<Array<string | number>>
 
 export class Utils {
-  promiseFromChildProcess(child: ChildProcessWithoutNullStreams) {
-    return new Promise(function (resolve, reject) {
-      child.addListener('error', reject)
-      child.addListener('close', resolve)
-    })
-  }
-
   executeSync(command: string): Promise<any> {
     return new Promise(async (resolve, reject) => {
       try {
@@ -28,6 +22,15 @@ export class Utils {
 
   getFullDateString(date: Date): string {
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
+  }
+
+  getFileStats(filepath: string) {
+    const file: fs.Stats = fs.statSync(filepath)
+    return [
+      path.parse(filepath).name,
+      this.getFullDateString(file.birthtime),
+      this.bytesToMegaBytes(file.size)
+    ]
   }
 
   async createDirectory(filepath: string): Promise<void> {

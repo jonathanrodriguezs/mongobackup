@@ -1,13 +1,12 @@
 import fs from 'fs'
 import path from 'path'
-import { spawn, execSync } from 'child_process'
 import { AlphanumericArray, Utils } from './Utils'
 
 export interface IBackupService {
-  getListOfSnapshots(database: string): Promise<AlphanumericArray>
   createSnapshot(database: string): Promise<string>
-  dropDatabase(database: string): Promise<void>
+  getListOfSnapshots(database: string): Promise<AlphanumericArray>
   restoreSnapshot(database: string, id: string): Promise<void>
+  deleteSnapshot(database: string, id: string): Promise<void>
 }
 
 export class BackupService implements IBackupService {
@@ -17,6 +16,7 @@ export class BackupService implements IBackupService {
   constructor() {
     this.path = path.resolve(__dirname, 'backups')
     this.utils = new Utils()
+
     this.utils.createDirectory(this.path)
   }
 
@@ -30,40 +30,38 @@ export class BackupService implements IBackupService {
     return filepath
   }
 
-  async dropDatabase(database: string): Promise<void> {
-    try {
-      this.utils.executeSync(`mongo ${database} --eval "db.dropDatabase()"`)
-    } catch (error) {
-      console.log('Caught error', error)
-    }
-  }
-
-  // Create a temporal snapshot of the database (only on safe mode)
-  async restoreSnapshot(database: string, id: string): Promise<void> {
-    const dump = path.join(this.path, database, id + '.dump')
-    if (!fs.existsSync(dump)) return console.log('There is no snapshot with the ID ' + id)
-    await this.dropDatabase(database)
-    this.utils.executeSync(`mongorestore --archive=${dump}`) // Use -d when restoring BSON
-  }
-
   async getListOfSnapshots(database: string): Promise<AlphanumericArray> {
     try {
       const directory: string = path.join(this.path, database)
       if (!fs.existsSync(directory)) this.utils.createDirectory(directory)
-      const files: string[] = fs.readdirSync(directory)
 
+      const files: string[] = fs.readdirSync(directory)
       return files.map(filename => {
         const filepath: string = path.join(directory, filename)
-        const file: fs.Stats = fs.statSync(filepath)
-        return [
-          path.parse(filename).name,
-          this.utils.getFullDateString(file.birthtime),
-          this.utils.bytesToMegaBytes(file.size)
-        ]
+        return this.utils.getFileStats(filepath)
       })
     } catch (error) {
       console.log('Caught error', error)
       return []
     }
+  }
+
+  // Create a temporal snapshot of the database (only on safe mode)
+  async restoreSnapshot(database: string, id: string): Promise<void> {
+    const archive: string = path.join(this.path, database, id + '.dump')
+
+    if (fs.existsSync(archive)) {
+      // TODO: What is these commands fails?
+      this.utils.executeSync(`mongo ${database} --eval "db.dropDatabase()"`)
+      this.utils.executeSync(`mongorestore --archive=${archive}`)
+    } else {
+      // TODO: Error codes API
+      console.log('There is no snapshot with the ID ' + id)
+    }
+  }
+
+  async deleteSnapshot(database: string, id: string): Promise<void> {
+    const archive: string = path.join(this.path, database, id + '.dump')
+    if (fs.existsSync(archive)) fs.rmSync(archive)
   }
 }
