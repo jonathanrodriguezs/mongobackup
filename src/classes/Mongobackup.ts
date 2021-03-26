@@ -18,16 +18,18 @@ export class Mongobackup {
       .parse(args)
   }
 
-  public async list(): Promise<Table | void> {
+  public async list(database: string): Promise<Table | void> {
     try {
-      const snapshots: AlphanumericArray = await this.api.getListOfSnapshots('fundacion')
+      const snapshots: AlphanumericArray = await this.api.getListOfSnapshots(database)
       const table = new Table({
         head: ['ID', 'Date', 'Size'],
         chars: { mid: '', 'left-mid': '', 'mid-mid': '', 'right-mid': '' },
         style: { 'padding-left': 2, 'padding-right': 2, head: [], border: [] }
       })
+      console.log(
+        `There are ${snapshots.length} snapshots for the "${database}" database:`
+      )
       table.push(...snapshots)
-      console.log(`You have ${table.length} snapshots for the fundacion database:`)
       console.log(table.toString())
       return table
     } catch (error) {
@@ -36,8 +38,11 @@ export class Mongobackup {
   }
 
   public async execute(options: program.OptionValues): Promise<void> {
-    if (options.list) await this.list()
-    else if (options.create) await this.api.createSnapshot('fundacion')
+    const database = 'testing'
+    const snapshot = '1616737782313'
+    if (options.list) await this.list(database)
+    else if (options.create) await this.api.createSnapshot(database)
+    else if (options.restore) await this.api.restoreSnapshot(database, snapshot)
   }
 
   public initialize(): void {

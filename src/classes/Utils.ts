@@ -1,5 +1,5 @@
 import fs from 'fs'
-import { ChildProcessWithoutNullStreams } from 'node:child_process'
+import { execSync, ChildProcessWithoutNullStreams } from 'child_process'
 
 export type AlphanumericArray = Array<Array<string | number>>
 
@@ -11,9 +11,19 @@ export class Utils {
     })
   }
 
+  executeSync(command: string): Promise<any> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        resolve(execSync(command))
+      } catch (error) {
+        reject(error)
+      }
+    })
+  }
+
   bytesToMegaBytes(bytes: number): string {
     const BYTES_TO_MEGABYTES = 1024 * 1024
-    return (bytes / BYTES_TO_MEGABYTES).toFixed(2) + ' MB'
+    return (bytes / BYTES_TO_MEGABYTES).toFixed(4) + ' MB'
   }
 
   getFullDateString(date: Date): string {

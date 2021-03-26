@@ -1,11 +1,13 @@
 import fs from 'fs'
 import path from 'path'
-import { spawn } from 'child_process'
+import { spawn, execSync } from 'child_process'
 import { AlphanumericArray, Utils } from './Utils'
 
 export interface IBackupService {
   getListOfSnapshots(database: string): Promise<AlphanumericArray>
-  createSnapshot(database: string): Promise<void>
+  createSnapshot(database: string): Promise<string>
+  dropDatabase(database: string): Promise<void>
+  restoreSnapshot(database: string, id: string): Promise<void>
 }
 
 export class BackupService implements IBackupService {
@@ -18,23 +20,38 @@ export class BackupService implements IBackupService {
     this.utils.createDirectory(this.path)
   }
 
-  async createSnapshot(database: string): Promise<void> {
+  async createSnapshot(database: string): Promise<string> {
     const timestamp: number = new Date().getTime()
     const directory: string = path.join(this.path, database)
     const filepath: string = path.join(directory, timestamp + '.dump')
 
     await this.utils.createDirectory(directory)
-    const process = spawn('mongodump', ['-d=' + database, '--archive=' + filepath])
+    this.utils.executeSync(`mongodump -d=${database} --archive=${filepath}`)
+    return filepath
+  }
 
-    // process.stderr.on('data', data => {
-    //   console.log(data.toString())
-    // })
+  async dropDatabase(database: string): Promise<void> {
+    try {
+      this.utils.executeSync(`mongo ${database} --eval "db.dropDatabase()"`)
+    } catch (error) {
+      console.log('Caught error', error)
+    }
+  }
+
+  // Create a temporal snapshot of the database (only on safe mode)
+  async restoreSnapshot(database: string, id: string): Promise<void> {
+    const dump = path.join(this.path, database, id + '.dump')
+    if (!fs.existsSync(dump)) return console.log('There is no snapshot with the ID ' + id)
+    await this.dropDatabase(database)
+    this.utils.executeSync(`mongorestore --archive=${dump}`) // Use -d when restoring BSON
   }
 
   async getListOfSnapshots(database: string): Promise<AlphanumericArray> {
     try {
       const directory: string = path.join(this.path, database)
+      if (!fs.existsSync(directory)) this.utils.createDirectory(directory)
       const files: string[] = fs.readdirSync(directory)
+
       return files.map(filename => {
         const filepath: string = path.join(directory, filename)
         const file: fs.Stats = fs.statSync(filepath)
