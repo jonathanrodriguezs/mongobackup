@@ -1,3 +1,4 @@
+import os from 'os'
 import fs from 'fs'
 import path from 'path'
 import { AlphanumericArray, Utils } from './Utils'
@@ -15,7 +16,7 @@ export class BackupService implements IBackupService {
   public safeMode: boolean
 
   constructor(safeMode: boolean = true) {
-    this.path = path.resolve(__dirname, 'backups')
+    this.path = path.resolve(os.homedir(), 'mongobackups')
     this.utils = new Utils()
     this.safeMode = safeMode
 
@@ -37,6 +38,7 @@ export class BackupService implements IBackupService {
     await this.utils.createDirectory(directory)
 
     const { stdout, stderr } = await this.utils.exec(command)
+    // TODO: Delete corrupted file if user interrupts the dump
     console.log(stdout, stderr)
 
     return filepath
