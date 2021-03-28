@@ -1,4 +1,5 @@
-import chalk, { Chalk, ChalkFunction } from 'chalk'
+import { EOL } from 'os'
+import chalk from 'chalk'
 import figlet from 'figlet'
 import Table from 'cli-table'
 import program from 'commander'
@@ -59,16 +60,17 @@ export class Mongobackup {
    */
   public initialize(): void {
     const options = this.program.opts()
-    this.printHeader('green')
-    this.execute({ list: true })
+    this.printHeader('mongobackup', 'green')
+    this.execute(options)
   }
 
   /**
    * Log the CLI header to stdout.
    *
-   * @param color - Header's color
+   * @param text Text to apply ASCII art font alike.
+   * @param color Font color to print the header.
    */
-  public printHeader(color: string): void {
-    console.log((chalk as any)[color](figlet.textSync('mongobackup')), '\n')
+  public printHeader(text: string, color: string): void {
+    console.log((chalk as any)[color](figlet.textSync(text)), EOL)
   }
 }
