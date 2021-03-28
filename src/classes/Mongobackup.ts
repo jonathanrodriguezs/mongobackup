@@ -1,4 +1,4 @@
-import chalk from 'chalk'
+import chalk, { Chalk, ChalkFunction } from 'chalk'
 import figlet from 'figlet'
 import Table from 'cli-table'
 import program from 'commander'
@@ -18,7 +18,12 @@ export class Mongobackup {
       .parse(args)
   }
 
-  public async list(database: string): Promise<Table | void> {
+  /**
+   * Log to stdout the table of snapshots for the selected database.
+   *
+   * @param database Selected database.
+   */
+  public async list(database: string): Promise<void> {
     try {
       const snapshots: AlphanumericArray = await this.api.getListOfSnapshots(database)
       const table = new Table({
@@ -26,33 +31,44 @@ export class Mongobackup {
         chars: { mid: '', 'left-mid': '', 'mid-mid': '', 'right-mid': '' },
         style: { 'padding-left': 2, 'padding-right': 2, head: [], border: [] }
       })
-      console.log(
-        `There are ${snapshots.length} snapshots for the "${database}" database:`
-      )
       table.push(...snapshots)
+      console.log(`There are ${table.length} snapshots for the "${database}" database:`)
       console.log(table.toString())
-      return table
     } catch (error) {
       console.log('Error', error)
     }
   }
 
+  /**
+   * Execute one option (list, create, restore or delete).
+   *
+   * @param options Object with the selected options.
+   */
   public async execute(options: program.OptionValues): Promise<void> {
-    const database = 'testing'
+    const database = 'fundacion'
     const snapshot = '1616737782313'
+
     if (options.list) await this.list(database)
     else if (options.create) await this.api.createSnapshot(database)
     else if (options.restore) await this.api.restoreSnapshot(database, snapshot)
     else if (options.delete) await this.api.deleteSnapshot(database, snapshot)
   }
 
+  /**
+   * Initialize the CLI. Printting the header and executing the options.
+   */
   public initialize(): void {
     const options = this.program.opts()
-    this.printHeader()
+    this.printHeader('green')
     this.execute({ list: true })
   }
 
-  public printHeader(): void {
-    console.log(chalk.green(figlet.textSync('mongobackup')), '\n')
+  /**
+   * Log the CLI header to stdout.
+   *
+   * @param color - Header's color
+   */
+  public printHeader(color: string): void {
+    console.log((chalk as any)[color](figlet.textSync('mongobackup')), '\n')
   }
 }
