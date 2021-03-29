@@ -80,8 +80,8 @@ export class BackupService implements IBackupService {
 
     if (fs.existsSync(archive)) {
       // TODO: What is these commands fails?
-      // execSync(`mongo ${database} --eval "db.dropDatabase()"`)
-      // execSync(`mongorestore --archive=${archive}`)
+      this.utils.exec(`mongo ${database} --eval "db.dropDatabase()"`)
+      this.utils.exec(`mongorestore --archive=${archive}`)
     } else {
       // TODO: Error codes API / Exception handling
       console.log('There is no snapshot with the ID ' + id)
