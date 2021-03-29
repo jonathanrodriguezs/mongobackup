@@ -37,8 +37,13 @@ export class BackupService implements IBackupService {
 
     await this.utils.createDirectory(directory)
 
-    const { stdout, stderr } = await this.utils.exec(command)
     // TODO: Delete corrupted file if user interrupts the dump
+    process.on('SIGINT', function () {
+      console.log('! Caught interrupt signal')
+      // if (i_should_exit) process.exit()
+    })
+
+    const { stdout, stderr } = await this.utils.exec(command)
     console.log(stdout, stderr)
 
     return filepath
@@ -56,7 +61,7 @@ export class BackupService implements IBackupService {
       if (!fs.existsSync(directory)) this.utils.createDirectory(directory)
 
       const files: string[] = fs.readdirSync(directory)
-      const stats = files.map(filename => {
+      const stats: Promise<string[]>[] = files.map(filename => {
         const filepath: string = path.join(directory, filename)
         return this.utils.getFileStats(filepath)
       })
