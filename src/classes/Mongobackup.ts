@@ -29,17 +29,10 @@ export class Mongobackup {
    */
   public async list(database: string): Promise<void> {
     try {
-      const snapshots: AlphanumericArray = await this.api.getListOfSnapshots(database)
-      const sizes = <string[]>snapshots.map(item => item[2])
-      const sizesSum = this.utils.sumSizesOnBytes(sizes)
-      const sizeInMegabytes = this.utils.convertBytes(sizesSum, 'MB')
-
-      const table = new Table({
-        head: ['ID', 'Date', 'Size'],
-        chars: { mid: '', 'left-mid': '', 'mid-mid': '', 'right-mid': '' },
-        style: { 'padding-left': 2, 'padding-right': 2, head: [], border: [] }
-      })
-      table.push(...snapshots)
+      const data: AlphanumericArray = await this.api.getListOfSnapshots(database)
+      const sumOfSizes: number = this.utils.sumSizesOnBytes(<string[]>data.map(x => x[2]))
+      const sizeInMegabytes: string = this.utils.convertBytes(sumOfSizes, 'MB')
+      const table: Table = this.utils.initializeCliTable(['ID', 'Date', 'Size'], data)
 
       console.log(`There are ${table.length} snapshots for the "${database}" database:`)
       console.log(table.toString())
@@ -68,9 +61,9 @@ export class Mongobackup {
    * Initialize the CLI: Print the header and execute the passed options.
    */
   public initialize(): void {
-    const options = this.program.opts()
+    const options: program.OptionValues = this.program.opts()
     this.printHeader('mongobackup', 'green')
-    this.execute({ list: true })
+    this.execute({ create: true })
   }
 
   /**
