@@ -4,11 +4,12 @@ import figlet from 'figlet'
 import Table from 'cli-table'
 import program from 'commander'
 import { BackupService } from './BackupService'
-import { AlphanumericArray } from './Utils'
+import { AlphanumericArray, Utils } from './Utils'
 
 export class Mongobackup {
   private program: program.CommanderStatic
   private api: BackupService
+  private utils: Utils
 
   constructor(private args: string[]) {
     this.api = new BackupService()
@@ -17,6 +18,8 @@ export class Mongobackup {
       .option('-l, --list', 'List your snapshots')
       .option('-c, --create', 'Create a database full snapshot')
       .parse(args)
+
+    this.utils = new Utils()
   }
 
   /**
@@ -27,14 +30,20 @@ export class Mongobackup {
   public async list(database: string): Promise<void> {
     try {
       const snapshots: AlphanumericArray = await this.api.getListOfSnapshots(database)
+      const sizes = <string[]>snapshots.map(item => item[2])
+      const sizesSum = this.utils.sumSizesOnBytes(sizes)
+      const sizeInMegabytes = this.utils.convertBytes(sizesSum, 'MB')
+
       const table = new Table({
         head: ['ID', 'Date', 'Size'],
         chars: { mid: '', 'left-mid': '', 'mid-mid': '', 'right-mid': '' },
         style: { 'padding-left': 2, 'padding-right': 2, head: [], border: [] }
       })
       table.push(...snapshots)
+
       console.log(`There are ${table.length} snapshots for the "${database}" database:`)
       console.log(table.toString())
+      console.log(`Total size of snapshots: ${sizeInMegabytes} MB`)
     } catch (error) {
       console.log('Error', error)
     }
@@ -56,21 +65,21 @@ export class Mongobackup {
   }
 
   /**
-   * Initialize the CLI. Printting the header and executing the options.
+   * Initialize the CLI: Print the header and execute the passed options.
    */
   public initialize(): void {
     const options = this.program.opts()
     this.printHeader('mongobackup', 'green')
-    this.execute(options)
+    this.execute({ list: true })
   }
 
   /**
-   * Log the CLI header to stdout.
+   * Log to stdout the CLI header.
    *
-   * @param text Text to apply ASCII art font alike.
+   * @param text Text to apply ASCII art font.
    * @param color Font color to print the header.
    */
   public printHeader(text: string, color: string): void {
-    console.log((chalk as any)[color](figlet.textSync(text)), EOL)
+    console.log((<any>chalk)[color](figlet.textSync(text)), EOL)
   }
 }

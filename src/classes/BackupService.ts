@@ -17,9 +17,9 @@ export class BackupService implements IBackupService {
 
   constructor(safeMode: boolean = true) {
     this.path = path.resolve(os.homedir(), 'mongobackups')
-    this.utils = new Utils()
     this.safeMode = safeMode
 
+    this.utils = new Utils()
     this.utils.createDirectory(this.path)
   }
 
