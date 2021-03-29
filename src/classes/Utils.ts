@@ -4,6 +4,13 @@ import { promisify } from 'util'
 
 export type AlphanumericArray = Array<Array<string | number>>
 
+enum ToBytes {
+  B = 1,
+  KB = 1024,
+  MB = KB * 1024,
+  GB = MB * 1024
+}
+
 export class Utils {
   exec: Function
 
@@ -14,12 +21,12 @@ export class Utils {
   /**
    * Convert Bytes to Megabytes (1 / 1048576) with 4 decimals precision.
    *
-   * @param  bytes Number of bytes.
+   * @param bytes Number of bytes.
+   * @param symbol
    * @returns Equivalent Megabytes.
    */
-  bytesToMegaBytes(bytes: number): string {
-    const BYTES_TO_MEGABYTES = 1024 * 1024 // 1048576
-    return (bytes / BYTES_TO_MEGABYTES).toFixed(4)
+  convertBytes(bytes: number, symbol: string): string {
+    return (bytes / (<any>ToBytes)[symbol]).toFixed(4)
   }
 
   /**
@@ -44,7 +51,7 @@ export class Utils {
       return [
         path.parse(filepath).name,
         this.getFullDateString(file.birthtime),
-        this.bytesToMegaBytes(file.size) + ' MB'
+        this.convertBytes(file.size, 'MB') + ' MB'
       ]
     } catch (error) {
       console.log(error)
@@ -64,5 +71,19 @@ export class Utils {
     } catch (error) {
       console.log(error)
     }
+  }
+
+  /**
+   *
+   *
+   * @param array
+   * @returns {number}
+   */
+  sumSizesOnBytes(array: Array<string>): number {
+    return array.reduce((total: number, item: string) => {
+      const [size, symbol] = item.split(' ')
+      const sizeOnBytes = +size * (<any>ToBytes)[symbol]
+      return total + sizeOnBytes
+    }, 0)
   }
 }
