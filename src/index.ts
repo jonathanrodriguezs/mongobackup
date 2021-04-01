@@ -2,5 +2,5 @@
 
 import { Mongobackup } from './classes/Mongobackup'
 
-const cli = new Mongobackup(process.argv.slice(2))
+const cli = new Mongobackup(process.argv)
 cli.initialize()
