@@ -1,6 +1,6 @@
 {
   "name": "mongobackup",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "main": "bin/index.js",
   "description": "Manage your MongoDB backups during development",
   "author": {
@@ -11,18 +11,23 @@
   "devDependencies": {
     "@types/jest": "^26.0.21",
     "@types/node": "^14.14.35",
+    "@types/node-emoji": "^1.8.1",
+    "husky": "^5.2.0",
     "jest": "^26.6.3",
     "nodemon": "^2.0.7",
     "ts-jest": "^26.5.4",
     "ts-node": "^9.1.1",
+    "typedoc": "^0.20.34",
     "typescript": "^4.2.3"
   },
   "scripts": {
     "start": "nodemon --watch src/**/*.ts --exec ts-node src/index.ts",
     "create": "npm run build && npm run test",
     "build": "tsc -p .",
+    "build:refresh": "rm -rf bin/* && npm run build",
     "local": "npm i -g && mongobackup",
     "refresh": "rm -rf node_modules package-lock.json && npm i",
+    "doc": "typedoc --out docs ./src/classes",
     "test": "jest"
   },
   "dependencies": {
@@ -31,7 +36,8 @@
     "chalk": "^4.1.0",
     "cli-table": "^0.3.6",
     "commander": "^7.2.0",
-    "figlet": "^1.5.0"
+    "figlet": "^1.5.0",
+    "node-emoji": "^1.10.0"
   },
   "bin": {
     "mongobackup": "./bin/index.js"
