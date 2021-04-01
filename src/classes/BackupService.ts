@@ -24,7 +24,7 @@ export class BackupService implements IBackupService {
   }
 
   /**
-   * Create a full snapshost of the selected database.
+   * Create a full snapshot of the selected database.
    *
    * @param database Database to be backed up.
    * @returns The path of the created snapshot.
@@ -37,7 +37,7 @@ export class BackupService implements IBackupService {
 
     await this.utils.createDirectory(directory)
 
-    // TODO: Delete corrupted file if user interrupts the dump
+    // TODO: Delete corrupted file if user interrupts the backup process
     process.on('SIGINT', function () {
       console.log('! Caught interrupt signal')
       // if (i_should_exit) process.exit()
@@ -50,7 +50,7 @@ export class BackupService implements IBackupService {
   }
 
   /**
-   * Get the list of snapshosts with its file stats.
+   * Get the list of snapshots with its file stats.
    *
    * @param database Database to get the list of snapshots.
    * @returns A matrix with the shape [timestamp, size, date].
@@ -94,13 +94,14 @@ export class BackupService implements IBackupService {
   }
 
   /**
-   * Delete a selected snapshost based on its database and id.
+   * Delete a selected snapshot based on its database and id.
    *
    * @param database Database of the selected snapshot.
-   * @param id Selected snapshost to be deleted.
+   * @param id Selected snapshot to be deleted.
    */
   async deleteSnapshot(database: string, id: string): Promise<void> {
     const archive: string = path.join(this.path, database, id + '.dump')
     if (fs.existsSync(archive)) fs.rmSync(archive)
+    throw 'The snapshot does not exist'
   }
 }
