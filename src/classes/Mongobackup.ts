@@ -2,28 +2,55 @@ import { EOL } from 'os'
 import chalk from 'chalk'
 import figlet from 'figlet'
 import Table from 'cli-table'
-import program from 'commander'
+import commander, { Command } from 'commander'
 import { BackupService } from './BackupService'
 import { AlphanumericArray, Utils } from './Utils'
 
 export class Mongobackup {
-  private program: program.CommanderStatic
+  private program: commander.Command
   private api: BackupService
   private utils: Utils
 
   constructor(private args: string[]) {
     this.api = new BackupService()
-    this.program = program
-      .description('Manage your MongoDB backups during development.')
-      .option('-l, --list', 'List your snapshots')
-      .option('-c, --create', 'Create a database full snapshot')
-      .parse(args)
-
+    this.program = new Command('mongobackup')
     this.utils = new Utils()
+
+    this.program
+      .version('0.0.1')
+      .description('Manage your MongoDB backups easily during development.')
+
+    this.program
+      .command('list <database>')
+      .description('List your snapshots for a database')
+      .action(database => {
+        this.list(database)
+      })
+
+    this.program
+      .command('create <database>')
+      .description('Create a database full snapshot')
+      .action(database => {
+        this.create(database)
+      })
+
+    this.program
+      .command('restore <database> <snapshot>')
+      .description('Restore a database to a stored snapshot')
+      .action((database, snapshot) => {
+        this.restore(database, snapshot)
+      })
+
+    this.program
+      .command('delete <database> <snapshot>')
+      .description('Remove a stored snapshot')
+      .action((database, snapshot) => {
+        this.delete(database, snapshot)
+      })
   }
 
   /**
-   * Log to stdout the table of snapshots for the selected database.
+   * Display the table of snapshots for the selected database.
    *
    * @param database Selected database.
    */
@@ -31,48 +58,67 @@ export class Mongobackup {
     try {
       const data: AlphanumericArray = await this.api.getListOfSnapshots(database)
       const sumOfSizes: number = this.utils.sumSizesOnBytes(<string[]>data.map(x => x[2]))
-      const sizeInMegabytes: string = this.utils.convertBytes(sumOfSizes, 'MB')
+      const sizeInMB: string = this.utils.convertBytes(sumOfSizes, 'MB')
       const table: Table = this.utils.initializeCliTable(['ID', 'Date', 'Size'], data)
 
       console.log(`There are ${table.length} snapshots for the "${database}" database:`)
       console.log(table.toString())
-      console.log(`Total size of snapshots: ${sizeInMegabytes} MB`)
+      console.log(`Total size of snapshots: ${sizeInMB} MB`)
     } catch (error) {
-      console.log('Error', error)
+      this.utils.log(`Error: ${error}`, 'warning')
     }
   }
 
   /**
-   * Execute one option (list, create, restore or delete).
+   * Create a database snapshot.
    *
-   * @param options Object with the selected options.
+   * @param database Selected database.
    */
-  public async execute(options: program.OptionValues): Promise<void> {
-    const database = 'fundacion'
-    const snapshot = '1616737782313'
+  public async create(database: string): Promise<void> {
+    try {
+      this.utils.log(`Creating snapshot for ${database}`, 'process')
+      await this.api.createSnapshot(database)
+      this.utils.log('Snapshot created successfully', 'success')
+    } catch (error) {
+      this.utils.log(`Error: ${error}`, 'warning')
+    }
+  }
 
-    if (options.list) await this.list(database)
-    else if (options.create) await this.api.createSnapshot(database)
-    else if (options.restore) await this.api.restoreSnapshot(database, snapshot)
-    else if (options.delete) await this.api.deleteSnapshot(database, snapshot)
+  /**
+   *
+   * @param database
+   * @param snapshot
+   */
+  public async restore(database: string, snapshot: string): Promise<void> {
+    try {
+      this.utils.log(`Restoring ${snapshot} snapshot for ${database}`, 'process')
+      await this.api.restoreSnapshot(database, snapshot)
+      this.utils.log('Snapshot restored successfully', 'success')
+    } catch (error) {
+      this.utils.log(`Error: ${error}`, 'warning')
+    }
+  }
+
+  /**
+   *
+   * @param database
+   * @param snapshot
+   */
+  public async delete(database: string, snapshot: string): Promise<void> {
+    try {
+      this.utils.log(`Deleting ${snapshot} snapshot for ${database}`, 'deletion')
+      await this.api.deleteSnapshot(database, snapshot)
+      this.utils.log('Snapshot deleted successfully', 'success')
+    } catch (error) {
+      this.utils.log(`Error: ${error}`, 'warning')
+    }
   }
 
   /**
    * Initialize the CLI: Print the header and execute the passed options.
    */
   public initialize(): void {
-    const options: program.OptionValues = this.program.opts()
-    this.printHeader('mongobackup', 'green')
-    this.execute({ create: true })
-  }
-
-  /**
-   * Log to stdout the CLI header.
-   *
-   * @param text Text to apply ASCII art font.
-   * @param color Font color to print the header.
-   */
-  public printHeader(text: string, color: string): void {
-    console.log((<any>chalk)[color](figlet.textSync(text)), EOL)
+    console.log(chalk.green(figlet.textSync('mongobackup')), EOL)
+    this.program.parse(this.args)
   }
 }
