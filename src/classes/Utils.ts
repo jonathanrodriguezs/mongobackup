@@ -3,6 +3,7 @@ import path from 'path'
 import Table from 'cli-table'
 import { promisify } from 'util'
 import { exec } from 'child_process'
+import { emojify } from 'node-emoji'
 
 export type AlphanumericArray = Array<Array<string | number>>
 
@@ -106,5 +107,21 @@ export class Utils {
     })
     table.push(...data)
     return table
+  }
+
+  /**
+   *
+   * @param content
+   * @param status
+   */
+  log(content: string, status: string) {
+    enum marks {
+      success = 'heavy_check_mark',
+      warning = 'warning',
+      process = 'pencil2',
+      deletion = 'wastebasket'
+    }
+    const mark = (<any>marks)[status]
+    console.log(emojify(`:${mark}:  ${content}`))
   }
 }
