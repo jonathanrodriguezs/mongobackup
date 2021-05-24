@@ -3,8 +3,8 @@ import chalk from 'chalk'
 import figlet from 'figlet'
 import Table from 'cli-table'
 import commander, { Command } from 'commander'
-import { BackupService } from './BackupService'
-import { AlphanumericArray, Utils } from './Utils'
+import { BackupService } from './backup-service'
+import { AlphanumericArray, Utils } from './utils'
 
 export class Mongobackup {
   private program: commander.Command
@@ -18,7 +18,7 @@ export class Mongobackup {
 
     this.program
       .version('0.0.1')
-      .description('Manage your MongoDB backups easily during development.')
+      .description('Manage your MongoDB backups during development.')
 
     this.program
       .command('list <database>')

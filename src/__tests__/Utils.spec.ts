@@ -1,4 +1,4 @@
-import { Utils } from '../classes/Utils'
+import { Utils } from '../utils'
 
 const utils = new Utils()
 

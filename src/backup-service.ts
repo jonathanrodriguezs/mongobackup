@@ -1,7 +1,7 @@
 import os from 'os'
 import fs from 'fs'
 import path from 'path'
-import { AlphanumericArray, Utils } from './Utils'
+import { AlphanumericArray, Utils } from './utils'
 
 export interface IBackupService {
   createSnapshot(database: string): Promise<string>
